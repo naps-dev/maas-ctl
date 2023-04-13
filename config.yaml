@@ -1,0 +1,3 @@
+token: 75sger59fvgfn1p2cwfe
+write-kubeconfig-mode: 644
+tls-san: example.rke2.io
