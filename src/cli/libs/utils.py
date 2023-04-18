@@ -228,7 +228,6 @@ def wait_for_port(host, port, timeout=60):
             click.echo(f"Port {port} connection failed!")
             return False
 
-        # Wait for a short time before trying again
         time.sleep(1)
 
 
