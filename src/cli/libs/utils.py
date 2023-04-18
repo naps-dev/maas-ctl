@@ -1,10 +1,11 @@
 import base64
+import contextlib
 import random
+import socket
 import string
 import time
 
 import click
-from yaspin import yaspin
 
 from cli.libs.click_config import pass_config
 
@@ -28,6 +29,63 @@ class MachineAvailabilityError(Exception):
     """
 
     pass
+
+
+def get_machines_by_tags(machines, tags):
+    """
+    Returns machines that match the tags provided.
+    """
+    # Create a set of tags to match against
+    tag_set = {tag.lower() for tag in tags}
+
+    # Find machines matching the tags
+    matching_machines = [
+        machine
+        for machine in machines
+        if any(tag in {t.name.lower() for t in machine.tags} for tag in tag_set)
+    ]
+
+    return matching_machines
+
+
+def get_machines_by_owner(machines, name):
+    """
+    Returns machines that match the names provided in a case-insensitive fashion.
+    """
+    matching_machines = [
+        machine
+        for machine in machines
+        if machine.owner and machine.owner.username.lower() == name.lower()
+    ]
+
+    # Check if all names were found
+    if len(matching_machines) == 0:
+        raise MachineNotFoundError(f"Could not find machines with owner: {name}")
+
+    return matching_machines
+
+
+def get_machines_by_pool_name(machines, names):
+    """
+    Returns machines that match the names provided in a case-insensitive fashion.
+    """
+    # Create a set of lowercased names to match against
+    name_set = {name.lower() for name in names}
+
+    # Find machines matching the names
+    matching_machines = [
+        machine for machine in machines if machine.pool.name.lower() in name_set
+    ]
+
+    # Check if all names were found
+    found_names = {machine.pool.name.lower() for machine in matching_machines}
+    if found_names != name_set:
+        missing_names = name_set - found_names
+        raise MachineNotFoundError(
+            f"Could not find machines with names: {', '.join(missing_names)}"
+        )
+
+    return matching_machines
 
 
 def get_machines_by_names(machines, names):
@@ -144,20 +202,33 @@ runcmd:
     return agent_cloud_init
 
 
-def wait_for_deployment(machine):
-    system_id = machine.system_id
+def wait_for_machine_status(machine, end_state):
     status = machine.status_message
-    hostname = machine.hostname
-    with yaspin(text=f"{status} {hostname} ", color="yellow") as spinner:
-        while status not in ["Deployed", "Failed deployment"]:
-            time.sleep(5)  # time consuming code
-            cur_machine = get_machine(system_id)
-            status = cur_machine.status_message
+    while status not in end_state:
+        time.sleep(5)
+        cur_machine = get_machine(machine.system_id)
+        if status != cur_machine.status_message:
+            click.echo(f"{status} {machine.hostname}...")
+        status = cur_machine.status_message
 
-        if status == "Deployed":
-            spinner.ok("✅")
-        else:
-            spinner.fail("💥")
+    click.echo(f"{status} {machine.hostname}")
+
+
+def wait_for_port(host, port, timeout=60):
+    start_time = time.monotonic()
+    click.echo(f"Waiting for port {port} connection...")
+    while True:
+        with contextlib.suppress(OSError), socket.create_connection(
+            (host, port), timeout=1
+        ):
+            click.echo(f"Port {port} connection succeeded!")
+            return True
+
+        if time.monotonic() - start_time >= timeout:
+            click.echo(f"Port {port} connection failed!")
+            return False
+
+        time.sleep(1)
 
 
 def allocate_machines(machines):
@@ -170,7 +241,7 @@ def deploy_servers(machines, token, ip_addresses):
     if len(machines) < 1:
         return
 
-    click.echo("Deploying Servers...")
+    click.echo("Deploying Servers:")
     primary_cloud_init, secondary_cloud_init = get_server_cloud_init(
         token, ip_addresses
     )
@@ -181,7 +252,9 @@ def deploy_servers(machines, token, ip_addresses):
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_deployment(machine)
+        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
+        wait_for_port(machine.ip_addresses[0], 22, 120)
+        wait_for_port(machine.ip_addresses[0], 6443, 300)
 
     for machine in machines[1:]:
         machine.deploy(
@@ -189,7 +262,9 @@ def deploy_servers(machines, token, ip_addresses):
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_deployment(machine)
+        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
+        wait_for_port(machine.ip_addresses[0], 22, 120)
+        wait_for_port(machine.ip_addresses[0], 6443, 300)
 
 
 def deploy_agents(machines, token, ip_addresses):
@@ -205,7 +280,7 @@ def deploy_agents(machines, token, ip_addresses):
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_deployment(machine)
+        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
 
 
 def get_machines_ip_addresses(machines):

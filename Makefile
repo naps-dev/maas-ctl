@@ -6,6 +6,8 @@ DOCKER_RUN_CI ?= docker run --rm -v $(PWD):/app/ -w /app --env-file ./.env ${IMA
 DOCKER_BUILD ?= docker build
 DOCKER_POETRY_BUILD ?= docker run --rm -v $(PWD):/app/ -w /app ${POETRY_IMAGE_NAME}
 DOCKER_PUSH_IMAGE ?= docker push
+APP_VERSION := $(shell grep -Po '(?<=version = ")[^"]*' "pyproject.toml" | sed 's/\./ /g' | awk '{print $$1"."$$2"."$$3}')
+export APP_VERSION
 
 .DEFAULT_GOAL := help
 
@@ -21,7 +23,7 @@ help: ## List of targets with descriptions
 build_all: build build_image ## Docker build poetry image and cli image
 
 .PHONY: _build_all
-_build_all: _build _build_image ## local build cli
+_build_all: clean _build _build_image ## local build cli
 
 .PHONY: _build_poetry
 _build_poetry: ## build the poetry container
@@ -35,13 +37,25 @@ build: ## Docker build cli wheel file
 _build: ## local build cli wheel file
 	poetry build -f wheel
 
+.PHONY: _bump_major_version
+_bump_major_version: ## local build cli wheel file
+	poetry version major
+
+.PHONY: _bump_minor_version
+_bump_minor_version: ## local build cli wheel file
+	poetry version minor
+
+.PHONY: _bump_patch_version
+_bump_patch_version: ## local build cli wheel file
+	poetry version patch
+
 .PHONY: build_image
 build_image: ## Docker build cli image
 	$(MAKE) _build_image
 
 .PHONY: _build_image
 _build_image: ## build cli image
-	$(DOCKER_BUILD) -f ./Dockerfile -t ${IMAGE_NAME}:${HASH} -t ${IMAGE_NAME}:latest .
+	$(DOCKER_BUILD) -f ./Dockerfile -t ${IMAGE_NAME}:${HASH} -t ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${APP_VERSION} .
 
 .PHONY: _dev_install
 _dev_install: ## Installs the cli locally
@@ -67,3 +81,7 @@ push_image: ## Push the image
 .PHONY: dotenv
 dotenv: ## create the .env file
 	@touch .env
+
+.PHONY: clean
+clean: ## create the .env file
+	@rm -rf ./dist
