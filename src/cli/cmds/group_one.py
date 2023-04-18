@@ -87,7 +87,9 @@ def release(config, all, tags, resource_pools, owner, machine_names):
             return
         for machine in selected_machines:
             machine.release()
-            utils.wait_for_release(machine)
+            utils.wait_for_machine_status(
+                machine, ["Ready", "Released", "Releasing failed"]
+            )
     except Exception as e:
         click.echo(f"An error occurred: {e}")
 

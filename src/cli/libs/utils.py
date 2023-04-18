@@ -202,21 +202,9 @@ runcmd:
     return agent_cloud_init
 
 
-def wait_for_deployment(machine):
+def wait_for_machine_status(machine, end_state):
     status = machine.status_message
-    while status not in ["Deployed", "Failed deployment"]:
-        time.sleep(5)
-        cur_machine = get_machine(machine.system_id)
-        if status != cur_machine.status_message:
-            click.echo(f"{status} {machine.hostname}...")
-        status = cur_machine.status_message
-
-    click.echo(f"{status} {machine.hostname}")
-
-
-def wait_for_release(machine):
-    status = machine.status_message
-    while status not in ["Ready", "Released", "Releasing failed"]:
+    while status not in end_state:
         time.sleep(5)
         cur_machine = get_machine(machine.system_id)
         if status != cur_machine.status_message:
@@ -265,7 +253,7 @@ def deploy_servers(machines, token, ip_addresses):
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_deployment(machine)
+        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
         wait_for_port(machine.ip_addresses[0], 22, 120)
         wait_for_port(machine.ip_addresses[0], 6443, 300)
 
@@ -275,7 +263,7 @@ def deploy_servers(machines, token, ip_addresses):
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_deployment(machine)
+        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
         wait_for_port(machine.ip_addresses[0], 22, 120)
         wait_for_port(machine.ip_addresses[0], 6443, 300)
 
@@ -293,7 +281,7 @@ def deploy_agents(machines, token, ip_addresses):
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_deployment(machine)
+        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
 
 
 def get_machines_ip_addresses(machines):
