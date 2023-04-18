@@ -31,9 +31,20 @@ def ls(config):
 @click.option(
     "--all", is_flag=True, help="Release all deployed machines without prompt."
 )
+@click.option(
+    "--tags",
+    default=None,
+    help="A comma-separated list of tags to filter the deployed machines.",
+)
+@click.option(
+    "--resource-pools", default=None, help="The names of the resource pools to release"
+)
+@click.option(
+    "--owner", default=None, help="Owner name for which machines will be released"
+)
 @click.argument("machine-names", required=False)
 @pass_config
-def release(config, all, machine_names):
+def release(config, all, tags, resource_pools, owner, machine_names):
     """
     Releases specified or all machines with a "Deployed" status message.
 
@@ -57,6 +68,14 @@ def release(config, all, machine_names):
                 click.echo("Aborting release.")
                 return
             selected_machines = machines
+        elif tags:
+            selected_machines = utils.get_machines_by_tags(machines, tags.split(","))
+        elif resource_pools:
+            selected_machines = utils.get_machines_by_pool_name(
+                machines, resource_pools.split(",")
+            )
+        elif owner:
+            selected_machines = utils.get_machines_by_owner(machines, owner)
         elif machine_names:
             selected_machines = utils.get_machines_by_names(
                 machines, machine_names.split(",")
@@ -68,7 +87,7 @@ def release(config, all, machine_names):
             return
         for machine in selected_machines:
             machine.release()
-            click.echo(f"Releasing {machine.hostname}...")
+            utils.wait_for_release(machine)
     except Exception as e:
         click.echo(f"An error occurred: {e}")
 
