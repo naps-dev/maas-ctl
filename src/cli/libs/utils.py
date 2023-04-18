@@ -203,31 +203,27 @@ runcmd:
 
 
 def wait_for_deployment(machine):
-    system_id = machine.system_id
     status = machine.status_message
-    hostname = machine.hostname
     while status not in ["Deployed", "Failed deployment"]:
         time.sleep(5)
-        cur_machine = get_machine(system_id)
+        cur_machine = get_machine(machine.system_id)
         if status != cur_machine.status_message:
-            click.echo(f"{status} {hostname}...")
+            click.echo(f"{status} {machine.hostname}...")
         status = cur_machine.status_message
 
-    click.echo(f"{status} {hostname}")
+    click.echo(f"{status} {machine.hostname}")
 
 
 def wait_for_release(machine):
-    system_id = machine.system_id
     status = machine.status_message
-    hostname = machine.hostname
     while status not in ["Ready", "Released", "Releasing failed"]:
         time.sleep(5)
-        cur_machine = get_machine(system_id)
+        cur_machine = get_machine(machine.system_id)
         if status != cur_machine.status_message:
-            click.echo(f"{status} {hostname}...")
+            click.echo(f"{status} {machine.hostname}...")
         status = cur_machine.status_message
 
-    click.echo(f"{status} {hostname}")
+    click.echo(f"{status} {machine.hostname}")
 
 
 def wait_for_port(host, port, timeout=60):
