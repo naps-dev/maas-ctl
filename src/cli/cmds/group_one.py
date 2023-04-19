@@ -28,6 +28,57 @@ def ls(config):
 
 
 @click.command()
+@click.argument("pool-name", required=True)
+@click.option("--count", default=1, help="The number of servers to allocate")
+@click.option(
+    "--tags",
+    default=None,
+    help="The tags used to select servers within the pool (ex. T1,R6515)",
+)
+@pass_config
+def allocate_from_pool(config, pool_name, tags, count):
+    """Print POOL_NAME.
+
+    POOL_NAME is the name of the pool where servers should be allocated
+    """
+    machines = config.client.machines.list()
+
+    pool_machines = utils.get_machines_by_pool_name(machines, [pool_name])
+
+    if tags:
+        pool_machines = utils.get_machines_by_tags(pool_machines, tags.split(","))
+
+    filtered_machines = list(
+        filter(
+            lambda machine: machine.status_message in ["Ready", "Released"],
+            pool_machines,
+        )
+    )
+
+    selected_machines = utils.select_random_machines(count, filtered_machines)
+    utils.allocate_machines(selected_machines)
+    click.echo(",".join([machine.hostname for machine in selected_machines]))
+
+
+@click.command()
+@click.argument("machine-name", required=True)
+@pass_config
+def get_ip_address(config, machine_name):
+    try:
+        machines = config.client.machines.list()
+        machine = utils.get_machines_by_names(machines, [machine_name])[0]
+
+        if machine.ip_addresses:
+            first_ip_address = machine.ip_addresses[0]
+            click.echo(f"{first_ip_address}")
+        else:
+            click.echo(f"No IP addresses found for {machine_name}")
+
+    except Exception as e:
+        click.echo(f"An error occurred: {e}")
+
+
+@click.command()
 @click.option(
     "--all", is_flag=True, help="Release all deployed machines without prompt."
 )
@@ -130,11 +181,15 @@ def deploy_cluster(config, servers, agents, token):
             all_machines = config.client.machines.list()
 
             machines = utils.get_machines_by_names(all_machines, names)
-
+            current_user = config.client.users.whoami()
             ready_machines = [
                 machine
                 for machine in machines
                 if machine.status_name in ["Ready", "Released"]
+                or (
+                    machine.status_name in ["Allocated"]
+                    and machine.owner.username == current_user.username
+                )
             ]
             if len(ready_machines) < count:
                 raise utils.MachineAvailabilityError(
@@ -163,5 +218,7 @@ def deploy_cluster(config, servers, agents, token):
 
 
 group_one.add_command(ls)
+group_one.add_command(get_ip_address)
+group_one.add_command(allocate_from_pool)
 group_one.add_command(release)
 group_one.add_command(deploy_cluster)

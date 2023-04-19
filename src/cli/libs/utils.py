@@ -31,6 +31,23 @@ class MachineAvailabilityError(Exception):
     pass
 
 
+def select_random_machines(n, machines):
+    """
+    Select n randomly selected machines from the input list.
+
+    Args:
+        n (int): Number of random machines to select.
+        machines (list): A list of machines.
+
+    Returns:
+        list: A list of n randomly selected machines.
+    """
+    if n > len(machines):
+        raise ValueError("n cannot be greater than the number of machines in the list")
+
+    return random.sample(machines, n)
+
+
 def get_machines_by_tags(machines, tags):
     """
     Returns machines that match the tags provided.
@@ -42,7 +59,7 @@ def get_machines_by_tags(machines, tags):
     matching_machines = [
         machine
         for machine in machines
-        if any(tag in {t.name.lower() for t in machine.tags} for tag in tag_set)
+        if {t.name.lower() for t in machine.tags}.intersection(tag_set)
     ]
 
     return matching_machines
