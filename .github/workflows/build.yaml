@@ -24,12 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build wheel, container
+      - name: Build wheel file and container image
         run: |
-          make _build_poetry
-          make build
-          make build_image
-          docker images
+          make build_all
 
       - name: show images
         run: |
