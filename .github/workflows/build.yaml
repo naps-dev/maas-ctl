@@ -1,0 +1,33 @@
+name: End-to-End Test
+run-name: ${{github.actor}} is conducting an end-to-end test of the DCO stack
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+    tags: ["v**"]
+permissions:
+  id-token: write
+  contents: read
+defaults:
+  run:
+    shell: bash
+env:
+  MCTL_VERSION: "0.3.0"
+
+jobs:
+
+  release-server:
+    name: Release Test Server
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+#      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Release Test Server
+        run: |
+          make _build_poetry
+          make build
+          make build_image
