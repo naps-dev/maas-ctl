@@ -26,6 +26,7 @@ jobs:
 
       - name: Build wheel file and container image
         run: |
+          make _build_poetry
           make build_all
 
       - name: show images
