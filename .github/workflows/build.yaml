@@ -31,3 +31,8 @@ jobs:
           make _build_poetry
           make build
           make build_image
+          docker images
+
+      - name: show images
+        run: |
+          docker images
