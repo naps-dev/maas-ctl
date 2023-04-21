@@ -13,7 +13,7 @@ defaults:
 jobs:
 
   build:
-    name: Build
+    name: Install, build, lint
     runs-on: [ubuntu-latest]
 
     steps:
@@ -36,6 +36,10 @@ jobs:
       - name: Build poetry image
         run: |
           make _build_poetry
+
+      - name: Install dependencies
+        run: |
+          make install
 
       - name: Build wheel file
         run: |
