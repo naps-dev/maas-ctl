@@ -26,7 +26,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: ${{ secrets.AWS_ECR_ROLE }}
-          role-session-name: arkime-ecr
+          role-session-name: maasctl-ecr
           aws-region: us-east-1
 
       - name: ECR Login
