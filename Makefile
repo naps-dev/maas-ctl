@@ -1,10 +1,10 @@
 HASH := $(shell git rev-parse HEAD)
-POETRY_IMAGE_NAME ?= poetry
-IMAGE_NAME ?= mctl
+POETRY_IMAGE_NAME ?= 765814079306.dkr.ecr.us-east-1.amazonaws.com/poetry
+IMAGE_NAME ?= 765814079306.dkr.ecr.us-east-1.amazonaws.com/mctl
 DOCKER_RUN ?= docker run --rm -it -v $(PWD):/app/ -w /app --env-file ./.env --entrypoint /bin/bash ${IMAGE_NAME}:latest
 DOCKER_RUN_CI ?= docker run --rm -v $(PWD):/app/ -w /app --env-file ./.env ${IMAGE_NAME}:latest
 DOCKER_BUILD ?= docker build
-DOCKER_POETRY_BUILD ?= docker run --rm -v $(PWD):/app/ -w /app ${POETRY_IMAGE_NAME}
+DOCKER_POETRY ?= docker run --rm -v $(PWD):/app/ -w /app ${POETRY_IMAGE_NAME}
 DOCKER_PUSH_IMAGE ?= docker push
 APP_VERSION := $(shell grep -Po '(?<=version = ")[^"]*' "pyproject.toml" | sed 's/\./ /g' | awk '{print $$1"."$$2"."$$3}')
 export APP_VERSION
@@ -31,7 +31,7 @@ _build_poetry: ## build the poetry container
 
 .PHONY: build
 build: ## Docker build cli wheel file
-	$(DOCKER_POETRY_BUILD) make _build
+	$(DOCKER_POETRY) make _build
 
 .PHONY: _build
 _build: ## local build cli wheel file
@@ -76,6 +76,7 @@ run_ci: ## Run a docker container with the cli available
 .PHONY: push_image
 push_image: ## Push the image
 	$(DOCKER_PUSH_IMAGE) ${IMAGE_NAME}:${HASH}
+	$(DOCKER_PUSH_IMAGE) ${IMAGE_NAME}:${APP_VERSION}
 	$(DOCKER_PUSH_IMAGE) ${IMAGE_NAME}:latest
 
 .PHONY: dotenv
@@ -85,3 +86,29 @@ dotenv: ## create the .env file
 .PHONY: clean
 clean: ## create the .env file
 	@rm -rf ./dist
+
+.PHONY: install
+install: ## Docker format code
+	$(DOCKER_POETRY) make _install
+
+.PHONY: _install
+_install: ## local format code
+	poetry install
+
+.PHONY: format
+format: install ## Docker format code
+	$(DOCKER_POETRY) make _format
+
+.PHONY: _format
+_format: _install ## local format code
+	poetry run black --check src/ tests/
+	poetry run isort --check src/ tests/
+
+.PHONY: lint
+lint: install ## Docker format code
+	$(DOCKER_POETRY) make _lint
+
+.PHONY: _lint
+_lint: _install ## local lint files
+	poetry run ruff --fix --show-fixes --exit-non-zero-on-fix src/ tests/
+	poetry run flake8 --config=./.flake8 src/ tests/

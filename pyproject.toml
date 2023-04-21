@@ -27,6 +27,7 @@ autoflake = "^2.0.0"
 pytest = "^7.2.1"
 types-openpyxl = "^3.0.4.4"
 ruff = "^0.0.252"
+black = "^23.3.0"
 
 [tool.ruff]
 ignore = [

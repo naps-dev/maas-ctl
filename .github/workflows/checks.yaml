@@ -1,0 +1,48 @@
+name: Lint, Format and Test
+run-name: ${{github.actor}} is conducting code quality checks for maas-ctl
+on:
+  pull_request:
+    types: [opened, synchronize]
+permissions:
+  id-token: write
+  contents: read
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  build:
+    name: Install, build, lint
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Configure AWS ECR Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_ECR_ROLE }}
+          role-session-name: maasctl-ecr
+          aws-region: us-east-1
+
+      - name: ECR Login
+        uses: aws-actions/amazon-ecr-login@v1
+        id: login-ecr
+
+      - name: Build poetry image
+        run: |
+          make _build_poetry
+
+      - name: Install dependencies
+        run: |
+          make install
+
+      - name: Build wheel file
+        run: |
+          make build
+
+      - name: Lint and Format
+        run: |
+          make lint
+          make format
