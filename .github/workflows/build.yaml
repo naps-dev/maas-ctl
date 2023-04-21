@@ -1,8 +1,6 @@
 name: Build
 run-name: ${{github.actor}} is conducting a build of maas-ctl
 on:
-  pull_request:
-    types: [opened, synchronize]
   push:
     branches: [main]
     tags: ["v**"]

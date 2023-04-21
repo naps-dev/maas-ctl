@@ -87,21 +87,28 @@ dotenv: ## create the .env file
 clean: ## create the .env file
 	@rm -rf ./dist
 
+.PHONY: install
+install: ## Docker format code
+	$(DOCKER_POETRY) make _install
+
+.PHONY: _install
+_install: ## local format code
+	poetry install
+
 .PHONY: format
-format: ## Docker format code
+format: install ## Docker format code
 	$(DOCKER_POETRY) make _format
 
-
 .PHONY: _format
-_format: ## local format code
+_format: _install ## local format code
 	poetry run black --check src/ tests/
-	poetry run isort src/ tests/
+	poetry run isort --check src/ tests/
 
 .PHONY: lint
-lint: ## Docker format code
+lint: install ## Docker format code
 	$(DOCKER_POETRY) make _lint
 
 .PHONY: _lint
-_lint: ## local lint files
+_lint: _install ## local lint files
 	poetry run ruff --fix --show-fixes --exit-non-zero-on-fix src/ tests/
 	poetry run flake8 --config=./.flake8 src/ tests/
