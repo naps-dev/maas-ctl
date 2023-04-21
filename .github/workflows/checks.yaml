@@ -1,11 +1,8 @@
-name: Build
-run-name: ${{github.actor}} is conducting a build of maas-ctl
+name: Lint, Format and Test
+run-name: ${{github.actor}} is conducting code quality checks for maas-ctl
 on:
   pull_request:
     types: [opened, synchronize]
-  push:
-    branches: [main]
-    tags: ["v**"]
 permissions:
   id-token: write
   contents: read
@@ -40,14 +37,7 @@ jobs:
         run: |
           make _build_poetry
 
-      - name: Build wheel file
+      - name: Lint and Format
         run: |
-          make build
-
-      - name: Build container image
-        run: |
-          make build_image
-
-      - name: Push container image
-        run: |
-          make push_image
+          make lint
+          make format
