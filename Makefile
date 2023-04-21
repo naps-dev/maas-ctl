@@ -20,41 +20,41 @@ help: ## List of targets with descriptions
 	@echo "\n---------------------------------------------------------------------------------------------------\n"
 
 .PHONY: build_all
-build_all: build build_image ## Docker build poetry image and cli image
+build_all: build build_image ## Build poetry image and cli image
 
 .PHONY: _build_all
-_build_all: clean _build _build_image ## local build cli
+_build_all: clean _build _build_image ## Build cli
 
 .PHONY: _build_poetry
-_build_poetry: ## build the poetry container
+_build_poetry: ## Build the poetry container
 	$(DOCKER_BUILD) -f ./tools/poetry.Dockerfile -t ${POETRY_IMAGE_NAME}:latest .
 
 .PHONY: build
-build: ## Docker build cli wheel file
+build: ## Build cli wheel file
 	$(DOCKER_POETRY) make _build
 
 .PHONY: _build
-_build: ## local build cli wheel file
+_build: ## Build cli wheel file
 	poetry build -f wheel
 
 .PHONY: _bump_major_version
-_bump_major_version: ## local build cli wheel file
+_bump_major_version: ## Bump the major version
 	poetry version major
 
 .PHONY: _bump_minor_version
-_bump_minor_version: ## local build cli wheel file
+_bump_minor_version: ## Bump the minor version
 	poetry version minor
 
 .PHONY: _bump_patch_version
-_bump_patch_version: ## local build cli wheel file
+_bump_patch_version: ## Bump the patch version
 	poetry version patch
 
 .PHONY: build_image
-build_image: ## Docker build cli image
+build_image: ## Build cli image
 	$(MAKE) _build_image
 
 .PHONY: _build_image
-_build_image: ## build cli image
+_build_image: ## Build cli image
 	$(DOCKER_BUILD) -f ./Dockerfile -t ${IMAGE_NAME}:${HASH} -t ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${APP_VERSION} .
 
 .PHONY: _dev_install
@@ -62,15 +62,15 @@ _dev_install: ## Installs the cli locally
 	pip install -e ${PWD}
 
 .PHONY: _dev_uninstall
-_dev_uninstall: ## uninstalls the cli
+_dev_uninstall: ## Uninstalls the cli
 	pip uninstall -y mctl
 
 .PHONY: run dotenv
-run: ## Run a docker container with the cli available
+run: ## Run a docker container with bash as the entrypoint
 	$(DOCKER_RUN)
 
 .PHONY: run_ci
-run_ci: ## Run a docker container with the cli available
+run_ci: ## Run a docker container with cli as the entrypoint
 	$(DOCKER_RUN_CI)
 
 .PHONY: push_image
@@ -80,35 +80,35 @@ push_image: ## Push the image
 	$(DOCKER_PUSH_IMAGE) ${IMAGE_NAME}:latest
 
 .PHONY: dotenv
-dotenv: ## create the .env file
+dotenv: ## Create the .env file
 	@touch .env
 
 .PHONY: clean
-clean: ## create the .env file
+clean: ## Remove the dist folder
 	@rm -rf ./dist
 
 .PHONY: install
-install: ## Docker format code
+install: ## Format code
 	$(DOCKER_POETRY) make _install
 
 .PHONY: _install
-_install: ## local format code
+_install: ## Format code
 	poetry install
 
 .PHONY: format
-format: install ## Docker format code
+format: install ## Format code
 	$(DOCKER_POETRY) make _format
 
 .PHONY: _format
-_format: _install ## local format code
+_format: _install ## Format code
 	poetry run black --check src/ tests/
 	poetry run isort --check src/ tests/
 
 .PHONY: lint
-lint: install ## Docker format code
+lint: install ## Format code
 	$(DOCKER_POETRY) make _lint
 
 .PHONY: _lint
-_lint: _install ## local lint files
+_lint: _install ## Lint files
 	poetry run ruff --fix --show-fixes --exit-non-zero-on-fix src/ tests/
 	poetry run flake8 --config=./.flake8 src/ tests/
