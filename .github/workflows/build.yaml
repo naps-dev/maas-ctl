@@ -33,11 +33,18 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
         id: login-ecr
 
-      - name: Build wheel file and container image
+      - name: Build poetry image
         run: |
           make _build_poetry
-          make build_all
 
-      - name: show images
+      - name: Build wheel file
         run: |
-          docker images
+          make build
+
+      - name: Build container image
+        run: |
+          make build_image
+
+      - name: Push container image
+        run: |
+          make push_image

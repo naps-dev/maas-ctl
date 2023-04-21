@@ -76,6 +76,7 @@ run_ci: ## Run a docker container with the cli available
 .PHONY: push_image
 push_image: ## Push the image
 	$(DOCKER_PUSH_IMAGE) ${IMAGE_NAME}:${HASH}
+	$(DOCKER_PUSH_IMAGE) ${IMAGE_NAME}:${APP_VERSION}
 	$(DOCKER_PUSH_IMAGE) ${IMAGE_NAME}:latest
 
 .PHONY: dotenv
