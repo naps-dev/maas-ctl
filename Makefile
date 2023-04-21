@@ -1,6 +1,6 @@
 HASH := $(shell git rev-parse HEAD)
-POETRY_IMAGE_NAME ?= poetry
-IMAGE_NAME ?= mctl
+POETRY_IMAGE_NAME ?= 765814079306.dkr.ecr.us-east-1.amazonaws.com/poetry
+IMAGE_NAME ?= 765814079306.dkr.ecr.us-east-1.amazonaws.com/mctl
 DOCKER_RUN ?= docker run --rm -it -v $(PWD):/app/ -w /app --env-file ./.env --entrypoint /bin/bash ${IMAGE_NAME}:latest
 DOCKER_RUN_CI ?= docker run --rm -v $(PWD):/app/ -w /app --env-file ./.env ${IMAGE_NAME}:latest
 DOCKER_BUILD ?= docker build
