@@ -32,7 +32,7 @@ jobs:
 
       - name: Build poetry image
         run: |
-          make _build_poetry
+          make build_poetry
 
       - name: Install dependencies
         run: |
