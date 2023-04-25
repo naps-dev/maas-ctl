@@ -3,6 +3,7 @@ import contextlib
 import random
 import socket
 import string
+import sys
 import time
 
 import click
@@ -43,7 +44,9 @@ def select_random_machines(n, machines):
         list: A list of n randomly selected machines.
     """
     if n > len(machines):
-        raise ValueError("n cannot be greater than the number of machines in the list")
+        raise ValueError(
+            f"Unable to allocate {n} machines, only {len(machines)} available"
+        )
 
     return random.sample(machines, n)
 
@@ -249,9 +252,13 @@ def wait_for_port(host, port, timeout=60):
 
 
 def allocate_machines(machines):
-    client = _get_client()
-    for machine in machines:
-        client.machines.allocate(hostname=machine.hostname)
+    try:
+        client = _get_client()
+        for machine in machines:
+            client.machines.allocate(hostname=machine.hostname)
+    except Exception as e:
+        click.echo(f"Error allocating machine {machine.hostname}: {e}")
+        sys.exit(1)
 
 
 def deploy_servers(machines, token, ip_addresses):

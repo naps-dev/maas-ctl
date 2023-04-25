@@ -41,23 +41,26 @@ def allocate_from_pool(config, pool_name, tags, count):
 
     POOL_NAME is the name of the pool where servers should be allocated
     """
-    machines = config.client.machines.list()
+    try:
+        machines = config.client.machines.list()
 
-    pool_machines = utils.get_machines_by_pool_name(machines, [pool_name])
+        pool_machines = utils.get_machines_by_pool_name(machines, [pool_name])
 
-    if tags:
-        pool_machines = utils.get_machines_by_tags(pool_machines, tags.split(","))
+        if tags:
+            pool_machines = utils.get_machines_by_tags(pool_machines, tags.split(","))
 
-    filtered_machines = list(
-        filter(
-            lambda machine: machine.status_message in ["Ready", "Released"],
-            pool_machines,
+        filtered_machines = list(
+            filter(
+                lambda machine: machine.status_name in ["Ready", "Released"],
+                pool_machines,
+            )
         )
-    )
 
-    selected_machines = utils.select_random_machines(count, filtered_machines)
-    utils.allocate_machines(selected_machines)
-    click.echo(",".join([machine.hostname for machine in selected_machines]))
+        selected_machines = utils.select_random_machines(count, filtered_machines)
+        utils.allocate_machines(selected_machines)
+        click.echo(",".join([machine.hostname for machine in selected_machines]))
+    except Exception as e:
+        click.echo(f"An error occurred: {e}")
 
 
 @click.command()
