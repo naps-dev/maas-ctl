@@ -3,9 +3,6 @@ run-name: ${{github.actor}} is conducting code quality checks for maas-ctl
 on:
   pull_request:
     types: [opened, synchronize]
-permissions:
-  id-token: write
-  contents: read
 defaults:
   run:
     shell: bash
