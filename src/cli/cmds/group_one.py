@@ -1,3 +1,5 @@
+import os.path
+
 import click
 
 import cli.libs.utils as utils
@@ -67,18 +69,13 @@ def allocate_from_pool(config, pool_name, tags, count):
 @click.argument("machine-name", required=True)
 @pass_config
 def get_ip_address(config, machine_name):
-    try:
-        machines = config.client.machines.list()
-        machine = utils.get_machines_by_names(machines, [machine_name])[0]
+    """
+    Gets the IP address of the machine specified by the machine-name
 
-        if machine.ip_addresses:
-            first_ip_address = machine.ip_addresses[0]
-            click.echo(f"{first_ip_address}")
-        else:
-            click.echo(f"No IP addresses found for {machine_name}")
-
-    except Exception as e:
-        click.echo(f"An error occurred: {e}")
+    Args:
+        machine-name: The name of the machine to retrieve the ip address
+    """
+    click.echo(utils.get_ip_address(machine_name))
 
 
 @click.command()
@@ -220,8 +217,49 @@ def deploy_cluster(config, servers, agents, token):
         click.echo(f"An error occurred: {e}")
 
 
+@click.command()
+@click.option(
+    "--remote-kubeconfig-file",
+    type=str,
+    default="/etc/rancher/rke2/rke2.yaml",
+    help="kubeconfig location on the remote server",
+)
+@click.option(
+    "--local-kubeconfig-file",
+    type=str,
+    default="~/.kube/config",
+    help="location on the local machine to store the file",
+)
+@click.option(
+    "--ssh-private-key",
+    type=str,
+    default=None,
+    help="A string containing a private key string or a file location",
+)
+@click.argument("machine-name", required=True)
+@pass_config
+def get_kubeconfig(
+    config, machine_name, remote_kubeconfig_file, local_kubeconfig_file, ssh_private_key
+):
+    """
+    Gets the kubeconfig of the machine specified by the machine-name
+
+    Args:
+        machine-name: The name of the machine to retrieve the kubeconfig
+    """
+    # get server ip address
+    server = utils.get_ip_address(machine_name)
+    utils.get_kubeconfig(
+        server,
+        remote_kubeconfig_file,
+        os.path.expanduser(local_kubeconfig_file),
+        ssh_private_key,
+    )
+
+
 group_one.add_command(ls)
 group_one.add_command(get_ip_address)
 group_one.add_command(allocate_from_pool)
 group_one.add_command(release)
 group_one.add_command(deploy_cluster)
+group_one.add_command(get_kubeconfig)
