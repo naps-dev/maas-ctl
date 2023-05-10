@@ -39,6 +39,10 @@ app_version: ## Print the app version
 poetry_version: ## Print the poetry version
 	@echo ${POETRY_VERSION}
 
+.PHONY: poetry_image_name
+poetry_image_name: ## Print the poetry version
+	@echo ${POETRY_IMAGE_NAME}
+
 .PHONY: pytest_version
 pytest_version: ## Print the pytest version
 	@echo ${PYTEST_VERSION}

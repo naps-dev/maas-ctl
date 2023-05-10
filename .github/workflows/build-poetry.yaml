@@ -8,8 +8,6 @@ on:
       - 'tools/poetry.Dockerfile'
 env:
   REGISTRY: ghcr.io
-  POETRY_IMAGE_NAME: poetry
-  POETRY_VERSION: poetry
 defaults:
   run:
     shell: bash
@@ -25,6 +23,7 @@ jobs:
     outputs:
       poetry_version: ${{ steps.env_var.outputs.POETRY_VERSION }}
       pytest_version: ${{ steps.env_var.outputs.PYTEST_VERSION }}
+      image_name: ${{ steps.env_var.outputs.IMAGE_NAME }}
 
     steps:
       - uses: actions/checkout@v3
@@ -33,9 +32,14 @@ jobs:
         name: Set Versions for Poetry and Pytest
         run: |
           POETRY_VERSION=$(make poetry_version)
+          echo "POETRY_VERSION=$POETRY_VERSION"
           echo "POETRY_VERSION=$POETRY_VERSION" >> $GITHUB_OUTPUT
           PYTEST_VERSION=$(make pytest_version)
+          echo "PYTEST_VERSION=$PYTEST_VERSION"
           echo "PYTEST_VERSION=$PYTEST_VERSION" >> $GITHUB_OUTPUT
+          IMAGE_NAME=$(make poetry_image_name)
+          echo "IMAGE_NAME=$IMAGE_NAME"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
@@ -53,9 +57,10 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          context: ./tools/poetry.Docker
+          context: .
+          file: ./tools/poetry.Dockerfile
           push: true
           build-args: |
-            POETRY_VERSION=${{ needs.build.outputs.poetry_version}}
-            PYTEST_VERSION=${{ needs.build.outputs.pytest_version}}
-          tags: ${{ needs.build.outputs.poetry_version}}
+            POETRY_VERSION=${{ steps.env_var.outputs.POETRY_VERSION }}
+            PYTEST_VERSION=${{ steps.env_var.outputs.PYTEST_VERSION }}
+          tags: "${{ steps.env_var.outputs.IMAGE_NAME }}:v${{ steps.env_var.outputs.POETRY_VERSION }}"
