@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'tools/poetry.Dockerfile'
+      - 'Makefile'
 env:
   REGISTRY: ghcr.io
 defaults:

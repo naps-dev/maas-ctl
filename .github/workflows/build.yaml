@@ -23,10 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build poetry image
-        run: |
-          make build_poetry
-
       - name: Build wheel file
         run: |
           make build
