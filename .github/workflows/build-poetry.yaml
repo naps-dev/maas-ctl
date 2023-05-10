@@ -9,6 +9,7 @@ on:
       - 'Makefile'
 env:
   REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 defaults:
   run:
     shell: bash
