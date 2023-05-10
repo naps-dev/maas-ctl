@@ -2,10 +2,10 @@ name: Build Poetry Image
 run-name: ${{github.actor}} is conducting a build of poetry
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'tools/poetry.Dockerfile'
+#  push:
+#    branches: [main]
+#    paths:
+#      - 'tools/poetry.Dockerfile'
 env:
   REGISTRY: ghcr.io
   POETRY_IMAGE_NAME: poetry
