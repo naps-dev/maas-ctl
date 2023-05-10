@@ -8,8 +8,6 @@ on:
 #      - 'tools/poetry.Dockerfile'
 env:
   REGISTRY: ghcr.io
-  POETRY_IMAGE_NAME: poetry
-  POETRY_VERSION: poetry
 defaults:
   run:
     shell: bash
