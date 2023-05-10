@@ -33,7 +33,9 @@ jobs:
         name: Set Versions for Poetry and Pytest
         run: |
           POETRY_VERSION=$(make poetry_version)
+          echo "POETRY_VERSION=$POETRY_VERSION" >> $GITHUB_OUTPUT
           PYTEST_VERSION=$(make pytest_version)
+          echo "PYTEST_VERSION=$PYTEST_VERSION" >> $GITHUB_OUTPUT
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
