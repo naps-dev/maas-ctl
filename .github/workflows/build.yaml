@@ -23,20 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build poetry image
-        run: |
-          make build_poetry
-
-      - name: Build wheel file
-        run: |
-          make build
-
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build wheel file
+        run: |
+          make build
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
