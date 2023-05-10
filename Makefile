@@ -5,12 +5,12 @@ PYTEST_VERSION ?= 7.2.1
 export PYTEST_VERSION
 APP_VERSION := $(shell grep -Po '(?<=version = ")[^"]*' "pyproject.toml" | sed 's/\./ /g' | awk '{print $$1"."$$2"."$$3}')
 export APP_VERSION
-POETRY_IMAGE_NAME ?= ghcr.io/naps-dev/poetry:v${POETRY_VERSION}
+POETRY_IMAGE_NAME ?= ghcr.io/naps-dev/poetry
 IMAGE_NAME ?= ghcr.io/naps-dev/maas-ctl
 DOCKER_RUN ?= docker run --rm -it -v $(PWD):/app/ -w /app --env-file ./.env --entrypoint /bin/bash ${IMAGE_NAME}:latest
 DOCKER_RUN_CI ?= docker run --rm -v $(PWD):/app/ -w /app --env-file ./.env ${IMAGE_NAME}:latest
 DOCKER_BUILD ?= docker build
-DOCKER_POETRY ?= docker run --rm -v $(PWD):/app/ -w /app ${POETRY_IMAGE_NAME}
+DOCKER_POETRY ?= docker run --rm -v $(PWD):/app/ -w /app ${POETRY_IMAGE_NAME}:v${POETRY_VERSION}
 DOCKER_PUSH_IMAGE ?= docker push
 
 .DEFAULT_GOAL := help
