@@ -360,7 +360,7 @@ def get_kubeconfig(server, server_kubeconfig_file, local_kubeconfig_file, ssh_ke
         hostname=f"{svr}",
         username="ubuntu",
         allow_agent=True,
-        look_for_keys=False,
+        look_for_keys=True,
         pkey=key,
     )
 
