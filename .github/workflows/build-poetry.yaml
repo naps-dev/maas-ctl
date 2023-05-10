@@ -23,6 +23,7 @@ jobs:
     outputs:
       poetry_version: ${{ steps.env_var.outputs.POETRY_VERSION }}
       pytest_version: ${{ steps.env_var.outputs.PYTEST_VERSION }}
+      image_name: ${{ steps.env_var.outputs.IMAGE_NAME }}
 
     steps:
       - uses: actions/checkout@v3
@@ -36,6 +37,9 @@ jobs:
           PYTEST_VERSION=$(make pytest_version)
           echo "PYTEST_VERSION=$PYTEST_VERSION"
           echo "PYTEST_VERSION=$PYTEST_VERSION" >> $GITHUB_OUTPUT
+          IMAGE_NAME=$(make poetry_image_name)
+          echo "IMAGE_NAME=$IMAGE_NAME"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
@@ -58,4 +62,4 @@ jobs:
           build-args: |
             POETRY_VERSION=${{ steps.env_var.outputs.POETRY_VERSION }}
             PYTEST_VERSION=${{ steps.env_var.outputs.PYTEST_VERSION }}
-          tags: ${{ needs.build.outputs.poetry_version}}
+          tags: [ "${{ steps.env_var.outputs.PYTEST_VERSION }}:${{ needs.build.outputs.poetry_version}}" ]
