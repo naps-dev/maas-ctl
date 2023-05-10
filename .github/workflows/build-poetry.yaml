@@ -58,7 +58,7 @@ jobs:
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
-          file: ./tools/poetry.Docker
+          file: ./tools/poetry.Dockerfile
           push: true
           build-args: |
             POETRY_VERSION=${{ steps.env_var.outputs.POETRY_VERSION }}
