@@ -1,5 +1,5 @@
 name: Build Poetry Image
-run-name: ${{github.actor}} is conducting a build of maas-ctl
+run-name: ${{github.actor}} is conducting a build of poetry
 on:
   workflow_dispatch:
   push:
