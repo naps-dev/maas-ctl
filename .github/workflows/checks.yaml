@@ -3,6 +3,9 @@ run-name: ${{github.actor}} is conducting code quality checks for maas-ctl
 on:
   pull_request:
     types: [opened, synchronize]
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 defaults:
   run:
     shell: bash
