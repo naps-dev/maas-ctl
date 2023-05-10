@@ -49,7 +49,7 @@ build: ## Build cli wheel file
 
 .PHONY: build_poetry
 build_poetry: ## Build the poetry container
-	$(DOCKER_BUILD) --build-arg POETRY_VERSION=${POETRY_VERSION} --build-arg PYTEST_VERSION=${PYTEST_VERSION} -f ./tools/poetry.Dockerfile -t ${POETRY_IMAGE_NAME}:latest -t ${POETRY_IMAGE_NAME}:v${POETRY_VERSION}.
+	$(DOCKER_BUILD) --build-arg POETRY_VERSION=${POETRY_VERSION} --build-arg PYTEST_VERSION=${PYTEST_VERSION} -f ./tools/poetry.Dockerfile -t ${POETRY_IMAGE_NAME}:latest -t ${POETRY_IMAGE_NAME}:v${POETRY_VERSION} .
 
 .PHONY: build_image
 build_image: ## Build cli image
