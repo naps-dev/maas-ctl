@@ -1,5 +1,6 @@
 import base64
 import contextlib
+import os
 import random
 import socket
 import string
@@ -7,6 +8,7 @@ import sys
 import time
 
 import click
+import paramiko
 
 from cli.libs.click_config import pass_config
 
@@ -316,3 +318,54 @@ def get_machines_ip_addresses(machines):
     for machine in machines:
         ips.append(machine.ip_addresses[0])
     return ips
+
+
+def get_ip_address(machine_name):
+    """
+    Gets the IP address of the machine specified by the machine-name
+
+    Args:
+        machine-name: The name of the machine to retrieve the ip address
+    """
+    try:
+        client = _get_client()
+        machines = client.machines.list()
+        machine = get_machines_by_names(machines, [machine_name])[0]
+
+        if machine.ip_addresses:
+            first_ip_address = machine.ip_addresses[0]
+            return f"{first_ip_address}"
+        else:
+            click.echo(f"No IP addresses found for {machine_name}")
+
+    except Exception as e:
+        click.echo(f"An error occurred: {e}")
+
+
+def get_kubeconfig(server, server_kubeconfig_file, local_kubeconfig_file, ssh_key=None):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    # click.echo(os.environ.get("SSH_AUTH_SOCK"))
+
+    if ssh_key is None:
+        key = None
+    elif os.path.isfile(ssh_key):
+        key = paramiko.RSAKey.from_private_key_file(ssh_key)
+    elif ssh_key.startswith("-----BEGIN"):
+        key = paramiko.RSAKey.from_private_key(ssh_key)
+    svr = f"{server}"
+
+    ssh.connect(
+        hostname=f"{svr}",
+        username="ubuntu",
+        allow_agent=True,
+        look_for_keys=True,
+        pkey=key,
+    )
+
+    sftp = ssh.open_sftp()
+    sftp.get(server_kubeconfig_file, local_kubeconfig_file)
+    sftp.close()
+
+    ssh.close()
