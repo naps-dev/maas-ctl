@@ -176,7 +176,7 @@ write_files:
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
       node-label:
-        - "node-type={node_type}"
+        - "hardware-tier={node_type}"
       disable:
         - "rke2-ingress-nginx"
 
@@ -197,7 +197,7 @@ write_files:
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
       node-label:
-        - "node-type={node_type}"
+        - "hardware-tier={node_type}"
       disable:
         - "rke2-ingress-nginx"
 
@@ -221,7 +221,7 @@ write_files:
       token: {token}
       write-kubeconfig-mode: 644
       node-label:
-        - "node-type={node_type}"
+        - "hardware-tier={node_type}"
 
 runcmd:
  - 'sudo bash -c "/opt/setup.sh agent | tee /tmp/setup.log"'
