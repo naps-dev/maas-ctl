@@ -163,7 +163,6 @@ def get_rke_token():
 
 
 def get_server_cloud_init(token, ip_addresses, node_type):
-    # - '\curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -'
     primary_server_cloud_init = f"""
 #cloud-config
 write_files:
