@@ -162,7 +162,7 @@ def get_rke_token():
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=20))
 
 
-def get_server_cloud_init(token, ip_addresses, node_type):
+def get_server_cloud_init(token, ip_addresses, node_labels, node_taints):
     primary_server_cloud_init = f"""
 #cloud-config
 write_files:
@@ -175,8 +175,8 @@ write_files:
       token: {token}
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
-      node-label:
-        - "hardware-tier={node_type}"
+      node-label: {node_labels}
+      node-taint: {node_taints}
       disable:
         - "rke2-ingress-nginx"
 
@@ -196,8 +196,8 @@ write_files:
       token: {token}
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
-      node-label:
-        - "hardware-tier={node_type}"
+      node-label: {node_labels}
+      node-taint: {node_taints}
       disable:
         - "rke2-ingress-nginx"
 
@@ -207,8 +207,7 @@ runcmd:
     return primary_server_cloud_init, secondary_server_cloud_init
 
 
-def get_agent_cloud_init(token, ip_addresses, node_type):
-    # - '\curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -'
+def get_agent_cloud_init(token, ip_addresses, node_labels, node_taints):
     agent_cloud_init = f"""
 #cloud-config
 write_files:
@@ -220,8 +219,8 @@ write_files:
       server: https://{ip_addresses[0]}:9345
       token: {token}
       write-kubeconfig-mode: 644
-      node-label:
-        - "hardware-tier={node_type}"
+      node-label: {node_labels}
+      node-taint: {node_taints}
 
 runcmd:
  - 'sudo bash -c "/opt/setup.sh agent | tee /tmp/setup.log"'
@@ -272,18 +271,38 @@ def deploy_servers(machines, token, ip_addresses):
     if len(machines) < 1:
         return
 
-    def get_machine_tier(tags):
-        tag_names = [tag.name for tag in tags]
-        for tag_name in tag_names:
-            if "Tier" in tag_name:
-                return tag_name
-        return None
+    def get_node_labels(tags):
+        label_strings = []
+        for tag in tags:
+            tag_name = tag.name
+            if tag_name.startswith("LABEL_"):
+                suffix = tag_name.split("_", 1)[1]
+                label_string = "cnaps.io/" + suffix.replace("_", "=")
+                label_strings.append(label_string)
+        return label_strings
+
+    def get_node_taints(tags):
+        taint_strings = []
+
+        for tag in tags:
+            tag_name = tag.name
+            if tag_name.startswith("TAINT_"):
+                split_string = tag_name.split("_")
+                taint_name = split_string[1]
+                taint_value = split_string[2]
+                effect = split_string[4]
+                taint_string = f"cnaps.io/{taint_name}={taint_value}:{effect}"
+                taint_strings.append(taint_string)
+
+        return taint_strings
 
     click.echo("Deploying Servers:")
     # print(server_cloud_init)
     for primary in machines[:1]:
+        primary_labels = get_node_labels(primary.tags)
+        primary_taints = get_node_taints(primary.tags)
         primary_cloud_init, _ = get_server_cloud_init(
-            token, ip_addresses, get_machine_tier(primary.tags)
+            token, ip_addresses, primary_labels, primary_taints
         )
         primary.deploy(
             user_data=to_base64(primary_cloud_init),
@@ -295,8 +314,10 @@ def deploy_servers(machines, token, ip_addresses):
         wait_for_port(primary.ip_addresses[0], 6443, 300)
 
     for secondary in machines[1:]:
+        secondary_labels = get_node_labels(secondary.tags)
+        secondary_taints = get_node_taints(secondary.tags)
         _, secondary_cloud_init = get_server_cloud_init(
-            token, ip_addresses, get_machine_tier(secondary.tags)
+            token, ip_addresses, secondary_labels, secondary_taints
         )
         secondary.deploy(
             user_data=to_base64(secondary_cloud_init),
