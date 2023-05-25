@@ -1,5 +1,6 @@
 import base64
 import contextlib
+import json
 import os
 import random
 import socket
@@ -162,8 +163,7 @@ def get_rke_token():
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=20))
 
 
-def get_server_cloud_init(token, ip_addresses):
-    # - '\curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -'
+def get_server_cloud_init(token, ip_addresses, node_labels, node_taints):
     primary_server_cloud_init = f"""
 #cloud-config
 write_files:
@@ -176,6 +176,8 @@ write_files:
       token: {token}
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
+      node-label: {json.dumps(node_labels)}
+      node-taint: {json.dumps(node_taints)}
       disable:
         - "rke2-ingress-nginx"
 
@@ -195,6 +197,8 @@ write_files:
       token: {token}
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
+      node-label: {json.dumps(node_labels)}
+      node-taint: {json.dumps(node_taints)}
       disable:
         - "rke2-ingress-nginx"
 
@@ -204,8 +208,7 @@ runcmd:
     return primary_server_cloud_init, secondary_server_cloud_init
 
 
-def get_agent_cloud_init(token, ip_addresses):
-    # - '\curl -sfL https://get.rke2.io | INSTALL_RKE2_VERSION=$RKE2_VERSION sh -'
+def get_agent_cloud_init(token, ip_addresses, node_labels, node_taints):
     agent_cloud_init = f"""
 #cloud-config
 write_files:
@@ -217,6 +220,8 @@ write_files:
       server: https://{ip_addresses[0]}:9345
       token: {token}
       write-kubeconfig-mode: 644
+      node-label: {json.dumps(node_labels)}
+      node-taint: {json.dumps(node_taints)}
 
 runcmd:
  - 'sudo bash -c "/opt/setup.sh agent | tee /tmp/setup.log"'
@@ -267,30 +272,58 @@ def deploy_servers(machines, token, ip_addresses):
     if len(machines) < 1:
         return
 
+    def get_node_labels(tags):
+        label_strings = []
+        for tag in tags:
+            tag_name = tag.name
+            if tag_name.startswith("LABEL_"):
+                _, label_name, label_value = tag_name.split("_", 2)
+                label_string = f"cnaps.io/{label_name}={label_value}"
+                label_strings.append(label_string)
+        return label_strings
+
+    def get_node_taints(tags):
+        taint_strings = []
+
+        for tag in tags:
+            tag_name = tag.name
+            if tag_name.startswith("TAINT_"):
+                _, taint_name, taint_value, taint_effect = tag_name.split("_", 3)
+                taint_string = f"cnaps.io/{taint_name}={taint_value}:{taint_effect}"
+                taint_strings.append(taint_string)
+
+        return taint_strings
+
     click.echo("Deploying Servers:")
-    primary_cloud_init, secondary_cloud_init = get_server_cloud_init(
-        token, ip_addresses
-    )
-    # print(server_cloud_init)
-    for machine in machines[:1]:
-        machine.deploy(
+    for primary in machines[:1]:
+        primary_labels = get_node_labels(primary.tags)
+        primary_taints = get_node_taints(primary.tags)
+        primary_cloud_init, _ = get_server_cloud_init(
+            token, ip_addresses, primary_labels, primary_taints
+        )
+        primary.deploy(
             user_data=to_base64(primary_cloud_init),
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
-        wait_for_port(machine.ip_addresses[0], 22, 120)
-        wait_for_port(machine.ip_addresses[0], 6443, 300)
+        wait_for_machine_status(primary, ["Deployed", "Failed deployment"])
+        wait_for_port(primary.ip_addresses[0], 22, 120)
+        wait_for_port(primary.ip_addresses[0], 6443, 300)
 
-    for machine in machines[1:]:
-        machine.deploy(
+    for secondary in machines[1:]:
+        secondary_labels = get_node_labels(secondary.tags)
+        secondary_taints = get_node_taints(secondary.tags)
+        _, secondary_cloud_init = get_server_cloud_init(
+            token, ip_addresses, secondary_labels, secondary_taints
+        )
+        secondary.deploy(
             user_data=to_base64(secondary_cloud_init),
             distro_series="rke2-ubuntu-2204",
             hwe_kernel="generic",
         )
-        wait_for_machine_status(machine, ["Deployed", "Failed deployment"])
-        wait_for_port(machine.ip_addresses[0], 22, 120)
-        wait_for_port(machine.ip_addresses[0], 6443, 300)
+        wait_for_machine_status(secondary, ["Deployed", "Failed deployment"])
+        wait_for_port(secondary.ip_addresses[0], 22, 120)
+        wait_for_port(secondary.ip_addresses[0], 6443, 300)
 
 
 def deploy_agents(machines, token, ip_addresses):
