@@ -1,5 +1,6 @@
 import base64
 import contextlib
+import json
 import os
 import random
 import socket
@@ -175,8 +176,8 @@ write_files:
       token: {token}
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
-      node-label: {node_labels}
-      node-taint: {node_taints}
+      node-label: {json.dumps(node_labels)}
+      node-taint: {json.dumps(node_taints)}
       disable:
         - "rke2-ingress-nginx"
 
@@ -196,8 +197,8 @@ write_files:
       token: {token}
       disable-cloud-controller: true
       write-kubeconfig-mode: 644
-      node-label: {node_labels}
-      node-taint: {node_taints}
+      node-label: {json.dumps(node_labels)}
+      node-taint: {json.dumps(node_taints)}
       disable:
         - "rke2-ingress-nginx"
 
@@ -219,8 +220,8 @@ write_files:
       server: https://{ip_addresses[0]}:9345
       token: {token}
       write-kubeconfig-mode: 644
-      node-label: {node_labels}
-      node-taint: {node_taints}
+      node-label: {json.dumps(node_labels)}
+      node-taint: {json.dumps(node_taints)}
 
 runcmd:
  - 'sudo bash -c "/opt/setup.sh agent | tee /tmp/setup.log"'
@@ -276,7 +277,7 @@ def deploy_servers(machines, token, ip_addresses):
         for tag in tags:
             tag_name = tag.name
             if tag_name.startswith("LABEL_"):
-                _, label_name, label_value = tag_name.split("_", 3)
+                _, label_name, label_value = tag_name.split("_", 2)
                 label_string = f"cnaps.io/{label_name}={label_value}"
                 label_strings.append(label_string)
         return label_strings
@@ -288,13 +289,12 @@ def deploy_servers(machines, token, ip_addresses):
             tag_name = tag.name
             if tag_name.startswith("TAINT_"):
                 _, taint_name, taint_value, taint_effect = tag_name.split("_", 3)
-                taint_string = f"cnaps.io/{taint_name}={taint_value}:{effect}"
+                taint_string = f"cnaps.io/{taint_name}={taint_value}:{taint_effect}"
                 taint_strings.append(taint_string)
 
         return taint_strings
 
     click.echo("Deploying Servers:")
-    # print(server_cloud_init)
     for primary in machines[:1]:
         primary_labels = get_node_labels(primary.tags)
         primary_taints = get_node_taints(primary.tags)

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Deploying clusters now adds node labels with the machine tier to each node. The label name is `node-type` and the value the Tier Tag from MAAS. (e.g. "Tier1")
+- Deploying clusters now adds node labels with the machine tier to each node. The label name is `cnaps.io/node-type` and the value the Tier Tag from MAAS. (e.g. "Tier-1")
 
 ### Changed
 
