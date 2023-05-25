@@ -276,8 +276,8 @@ def deploy_servers(machines, token, ip_addresses):
         for tag in tags:
             tag_name = tag.name
             if tag_name.startswith("LABEL_"):
-                suffix = tag_name.split("_", 1)[1]
-                label_string = "cnaps.io/" + suffix.replace("_", "=")
+                _, label_name, label_value = tag_name.split("_", 3)
+                label_string = f"cnaps.io/{label_name}={label_value}"
                 label_strings.append(label_string)
         return label_strings
 
