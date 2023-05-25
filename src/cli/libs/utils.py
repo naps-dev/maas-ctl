@@ -287,10 +287,7 @@ def deploy_servers(machines, token, ip_addresses):
         for tag in tags:
             tag_name = tag.name
             if tag_name.startswith("TAINT_"):
-                split_string = tag_name.split("_")
-                taint_name = split_string[1]
-                taint_value = split_string[2]
-                effect = split_string[4]
+                _, taint_name, taint_value, taint_effect = tag_name.split("_", 3)
                 taint_string = f"cnaps.io/{taint_name}={taint_value}:{effect}"
                 taint_strings.append(taint_string)
 
