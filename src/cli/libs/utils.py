@@ -268,36 +268,38 @@ def allocate_machines(machines):
         sys.exit(1)
 
 
+def _get_node_labels(tags):
+    label_strings = []
+    for tag in tags:
+        tag_name = tag.name
+        if tag_name.startswith("LABEL_"):
+            _, label_name, label_value = tag_name.split("_", 2)
+            label_string = f"cnaps.io/{label_name}={label_value}"
+            label_strings.append(label_string)
+    return label_strings
+
+
+def _get_node_taints(tags):
+    taint_strings = []
+
+    for tag in tags:
+        tag_name = tag.name
+        if tag_name.startswith("TAINT_"):
+            _, taint_name, taint_value, taint_effect = tag_name.split("_", 3)
+            taint_string = f"cnaps.io/{taint_name}={taint_value}:{taint_effect}"
+            taint_strings.append(taint_string)
+
+    return taint_strings
+
+
 def deploy_servers(machines, token, ip_addresses):
     if len(machines) < 1:
         return
 
-    def get_node_labels(tags):
-        label_strings = []
-        for tag in tags:
-            tag_name = tag.name
-            if tag_name.startswith("LABEL_"):
-                _, label_name, label_value = tag_name.split("_", 2)
-                label_string = f"cnaps.io/{label_name}={label_value}"
-                label_strings.append(label_string)
-        return label_strings
-
-    def get_node_taints(tags):
-        taint_strings = []
-
-        for tag in tags:
-            tag_name = tag.name
-            if tag_name.startswith("TAINT_"):
-                _, taint_name, taint_value, taint_effect = tag_name.split("_", 3)
-                taint_string = f"cnaps.io/{taint_name}={taint_value}:{taint_effect}"
-                taint_strings.append(taint_string)
-
-        return taint_strings
-
     click.echo("Deploying Servers:")
     for primary in machines[:1]:
-        primary_labels = get_node_labels(primary.tags)
-        primary_taints = get_node_taints(primary.tags)
+        primary_labels = _get_node_labels(primary.tags)
+        primary_taints = _get_node_taints(primary.tags)
         primary_cloud_init, _ = get_server_cloud_init(
             token, ip_addresses, primary_labels, primary_taints
         )
@@ -311,8 +313,8 @@ def deploy_servers(machines, token, ip_addresses):
         wait_for_port(primary.ip_addresses[0], 6443, 300)
 
     for secondary in machines[1:]:
-        secondary_labels = get_node_labels(secondary.tags)
-        secondary_taints = get_node_taints(secondary.tags)
+        secondary_labels = _get_node_labels(secondary.tags)
+        secondary_taints = _get_node_taints(secondary.tags)
         _, secondary_cloud_init = get_server_cloud_init(
             token, ip_addresses, secondary_labels, secondary_taints
         )
@@ -331,9 +333,13 @@ def deploy_agents(machines, token, ip_addresses):
         return
 
     click.echo("Deploying Agents...")
-    agent_cloud_init = get_agent_cloud_init(token, ip_addresses)
     # print(agent_cloud_init)
     for machine in machines:
+        agent_labels = _get_node_labels(machine.tags)
+        agent_taints = _get_node_taints(machine.tags)
+        agent_cloud_init = get_agent_cloud_init(
+            token, ip_addresses, agent_labels, agent_taints
+        )
         machine.deploy(
             user_data=to_base64(agent_cloud_init),
             distro_series="rke2-ubuntu-2204",
