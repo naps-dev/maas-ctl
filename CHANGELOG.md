@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workflow to build and push the cli docker image to GCR
 - Workflow to run code quality checks on the cli code
  
-[unreleased]: https://github.com/naps-dev/maas-ctl/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/naps-dev/maas-ctl/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/naps-dev/maas-ctl/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/naps-dev/maas-ctl/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/naps-dev/maas-ctl/releases/tag/v0.4.0
