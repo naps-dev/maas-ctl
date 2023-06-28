@@ -303,6 +303,7 @@ def deploy_servers(machines, token, ip_addresses):
         primary_cloud_init, _ = get_server_cloud_init(
             token, ip_addresses, primary_labels, primary_taints
         )
+        set_interface_names(primary)
         primary.deploy(
             user_data=to_base64(primary_cloud_init),
             distro_series="rke2-ubuntu-2204",
@@ -318,6 +319,7 @@ def deploy_servers(machines, token, ip_addresses):
         _, secondary_cloud_init = get_server_cloud_init(
             token, ip_addresses, secondary_labels, secondary_taints
         )
+        set_interface_names(secondary)
         secondary.deploy(
             user_data=to_base64(secondary_cloud_init),
             distro_series="rke2-ubuntu-2204",
@@ -340,6 +342,7 @@ def deploy_agents(machines, token, ip_addresses):
         agent_cloud_init = get_agent_cloud_init(
             token, ip_addresses, agent_labels, agent_taints
         )
+        set_interface_names(machine)
         machine.deploy(
             user_data=to_base64(agent_cloud_init),
             distro_series="rke2-ubuntu-2204",
@@ -408,3 +411,16 @@ def get_kubeconfig(server, server_kubeconfig_file, local_kubeconfig_file, ssh_ke
     sftp.close()
 
     ssh.close()
+
+
+def set_interface_names(machine):
+    for interface in machine.interfaces:
+        if "capture" in interface.tags:
+            # Get a copy of the tags because changing the name of the interface resets the tags
+            interface_tags = interface.tags[0:]
+            interface.name = "capture0"
+            interface.save()
+
+            #  put the tags back
+            interface.tags = interface_tags
+            interface.save()

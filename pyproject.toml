@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mctl"
-version = "0.6.0"
+version = "0.7.0"
 description = "mctl"
 authors = ["naps-dev"]
 readme = "README.md"
