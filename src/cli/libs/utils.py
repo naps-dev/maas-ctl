@@ -326,8 +326,6 @@ def deploy_servers(machines, token, ip_addresses):
             hwe_kernel="generic",
         )
         wait_for_machine_status(secondary, ["Deployed", "Failed deployment"])
-        wait_for_port(secondary.ip_addresses[0], 22, 120)
-        wait_for_port(secondary.ip_addresses[0], 6443, 300)
 
 
 def deploy_agents(machines, token, ip_addresses):
