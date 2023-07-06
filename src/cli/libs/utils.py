@@ -417,7 +417,7 @@ def set_interface_names(machine):
     for interface in machine.interfaces:
         if "capture" in interface.tags:
             # Get a copy of the tags because changing the name of the interface resets the tags
-            interface_tags = interface.tags[0:]
+            interface_tags = interface.tags[:]
             interface.name = "capture0"
             interface.save()
 
