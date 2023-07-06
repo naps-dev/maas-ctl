@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Deploying clusters now adds node labels with the machine tier to each node. The label name is `cnaps.io/node-type` and the value the Tier Tag from MAAS. (e.g. "Tier-1")
 
 ### Changed
 
@@ -23,9 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking
 
 
+## [0.7.0] - 2023-06-28
+
+### Added
+- Experimental support for renaming network interfaces based on tags set in MaaS. This is done by adding a tag to the network interface of the machine in MaaS. This feature only supports the tag `capture` and renames the tagged interface to `capture0`.
+
 ## [0.6.0] - 2023-06-14
 
 ### Added
+- Deploying clusters now adds node labels with the machine tier to each node. The label name is `cnaps.io/node-type` and the value is set via the corresponding label from MAAS. (e.g. "Tier-1")
 - Taints and tolerations are now added to RKE cluster based on tags setup in MaaS
 
 ## [0.5.0] - 2023-05-10
@@ -54,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workflow to run code quality checks on the cli code
  
 [unreleased]: https://github.com/naps-dev/maas-ctl/compare/v0.6.0...HEAD
+[0.7.0]: https://github.com/naps-dev/maas-ctl/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/naps-dev/maas-ctl/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/naps-dev/maas-ctl/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/naps-dev/maas-ctl/releases/tag/v0.4.0
